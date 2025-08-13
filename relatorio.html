@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Relatórios - DTPO Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --secondary-color: #6c757d;
+            --background-color: #f4f6f9;
+            --card-background: #ffffff;
+            --text-color: #343a40;
+            --text-muted: #6c757d;
+            --border-color: #e2e8f0;
+            --border-radius: 8px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        /* --- Navegação Principal --- */
+        .main-header {
+            background-color: var(--card-background);
+            box-shadow: var(--shadow);
+            padding: 0 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 64px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .header-left { display: flex; align-items: center; gap: 30px; }
+        .logo { font-size: 1.25rem; font-weight: 600; }
+        .main-nav a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-weight: 500;
+            padding: 22px 10px;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease-in-out;
+        }
+        .main-nav a:hover, .main-nav a.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        .user-controls { display: flex; align-items: center; gap: 15px; }
+        .user-info { font-size: 0.9rem; color: var(--text-muted); }
+        .admin-link { display: none; }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 25px;
+        }
+        .content-card {
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 25px;
+        }
+        .content-card h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+        
+        button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease-in-out;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .btn-primary { background-color: #0d6efd; color: white; }
+        .btn-secondary { background-color: #6c757d; color: white; }
+
+        input, select {
+            padding: 10px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            background-color: var(--card-background);
+            width: 100%;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+        }
+
+        .filters { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 20px; }
+        .filter-group { flex-grow: 1; }
+        .search-controls { display: flex; gap: 10px; }
+        
+        .report-entry { margin-top: 20px; border: 1px solid var(--border-color); border-radius: var(--border-radius); overflow: hidden; }
+        .report-header { background-color: #e9ecef; padding: 12px 15px; font-weight: 600; border-bottom: 1px solid var(--border-color); }
+        .report-body { padding: 15px; white-space: pre-wrap; font-family: "Menlo", "Monaco", monospace; background-color: #f8f9fa; line-height: 1.6; max-height: 400px; overflow-y: auto; }
+
+        .search-result-item {
+            border: 1px solid #b8daff;
+            border-radius: var(--border-radius);
+            margin-bottom: 15px;
+            background-color: var(--card-background);
+            overflow: hidden;
+            cursor: pointer;
+            transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
+        }
+        .search-result-item:hover {
+            box-shadow: 0 4px 10px rgba(13, 110, 253, 0.2);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+
+<header class="main-header">
+    <div class="header-left">
+        <div class="logo">DTPO Dashboard</div>
+        <nav class="main-nav">
+            <a href="index.html"><i data-feather="home"></i>Dashboard</a>
+            <a href="graficos.html"><i data-feather="pie-chart"></i>Gráficos</a>
+            <a href="relatorio.html" class="active"><i data-feather="file-text"></i>Relatórios</a>
+            <a href="add.html" class="admin-link"><i data-feather="plus-circle"></i>Adicionar Dados</a>
+            <a href="delete.html" class="admin-link"><i data-feather="trash-2"></i>Excluir Dados</a>
+        </nav>
+    </div>
+    <div class="user-controls">
+        <div class="user-info">
+            Bem-vindo, <span id="userDisplay">Visitante</span>!
+        </div>
+    </div>
+</header>
+
+<div class="main-content">
+    <div class="content-card">
+        <h3>Relatório de Atividades Detalhadas - DTPO-2</h3>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label for="filterMes">Filtrar por Mês:</label>
+                <select id="filterMes"></select>
+            </div>
+            <div class="filter-group" style="flex-grow: 2;">
+                <label for="searchBox">Pesquisar por rua ou serviço:</label>
+                <div class="search-controls">
+                    <input type="search" id="searchBox" placeholder="Ex: Rua Marechal Deodoro...">
+                    <button class="btn-primary" onclick="executarBusca()"><i data-feather="search"></i></button>
+                    <button class="btn-secondary" onclick="limparBusca()"><i data-feather="x"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <div id="relatoriosContainer"></div>
+        <div id="searchResultsContainer" style="display: none;"></div>
+        <p id="noResults" style="display: none; text-align: center; padding: 20px; color: var(--text-muted);">Nenhum registro encontrado.</p>
+    </div>
+</div>
+
+<script>
+// ===================================================================================
+// ARQUIVO: CONFIG.JS (EMBUTIDO)
+// ===================================================================================
+const setoresConfig = {
+    'coc': { nome: 'COC' },
+    'dtpo3g': { nome: 'DTPO-3G' },
+    'dtpo2': { nome: 'DTPO-2' }
+};
+
+// ===================================================================================
+// LÓGICA DO RELATÓRIO
+// ===================================================================================
+
+function pegarDadosTextuais() {
+    const d = localStorage.getItem('dtpoRegistrosTextuais');
+    return d ? JSON.parse(d) : [];
+}
+
+function carregarFiltros(mesPreSelecionado) {
+    const dados = pegarDadosTextuais().filter(d => d.setor === 'dtpo2');
+    const mesSelect = document.getElementById('filterMes');
+    const meses = new Set(dados.map(d => d.data));
+
+    mesSelect.innerHTML = '<option value="todos">Todos os Meses</option>';
+    Array.from(meses).sort().reverse().forEach(mes => {
+        const option = document.createElement('option');
+        option.value = mes; option.textContent = mes;
+        mesSelect.appendChild(option);
+    });
+
+    if (mesPreSelecionado && meses.has(mesPreSelecionado)) {
+        mesSelect.value = mesPreSelecionado;
+    }
+}
+
+function renderizarRelatoriosIniciais() {
+    let dados = pegarDadosTextuais().filter(d => d.setor === 'dtpo2');
+    const mesFiltro = document.getElementById('filterMes').value;
+    const container = document.getElementById('relatoriosContainer');
+    const noResultsEl = document.getElementById('noResults');
+    container.innerHTML = '';
+
+    if (mesFiltro !== 'todos') {
+        dados = dados.filter(d => d.data === mesFiltro);
+    }
+
+    noResultsEl.style.display = dados.length === 0 ? 'block' : 'none';
+    noResultsEl.textContent = 'Nenhum relatório encontrado para o mês selecionado.';
+    
+    dados.sort((a, b) => b.data.localeCompare(a.data)).forEach(d => {
+        const entryDiv = document.createElement('div');
+        entryDiv.className = 'report-entry';
+        const header = document.createElement('div');
+        header.className = 'report-header';
+        header.textContent = `Relatório de ${setoresConfig[d.setor]?.nome || d.setor} - ${d.data}`;
+        const body = document.createElement('div');
+        body.className = 'report-body';
+        body.textContent = d.texto;
+        entryDiv.appendChild(header);
+        entryDiv.appendChild(body);
+        container.appendChild(entryDiv);
+    });
+}
+
+function executarBusca() {
+    const termoBusca = document.getElementById('searchBox').value.trim().toLowerCase();
+    if (!termoBusca) {
+        limparBusca();
+        return;
+    }
+    
+    let dados = pegarDadosTextuais().filter(d => d.setor === 'dtpo2');
+    const mesFiltro = document.getElementById('filterMes').value;
+    if (mesFiltro !== 'todos') {
+        dados = dados.filter(d => d.data === mesFiltro);
+    }
+
+    const foundLines = [];
+    dados.forEach(relatorio => {
+        const lines = relatorio.texto.split('\n');
+        lines.forEach(line => {
+            if (line.trim() !== '' && line.toLowerCase().includes(termoBusca)) {
+                foundLines.push({ text: line, source: relatorio.data });
+            }
+        });
+    });
+
+    renderizarResultadosBusca(foundLines);
+}
+
+function renderizarResultadosBusca(resultados) {
+    const relatoriosContainer = document.getElementById('relatoriosContainer');
+    const searchResultsContainer = document.getElementById('searchResultsContainer');
+    const noResultsEl = document.getElementById('noResults');
+    
+    relatoriosContainer.style.display = 'none';
+    searchResultsContainer.style.display = 'block';
+    searchResultsContainer.innerHTML = '';
+
+    if (resultados.length > 0) {
+        noResultsEl.style.display = 'none';
+        resultados.forEach(result => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'search-result-item';
+            itemDiv.setAttribute('data-source-month', result.source);
+            itemDiv.onclick = () => mostrarRelatorioCompletoDoMes(result.source);
+
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'report-header';
+            headerDiv.textContent = `Encontrado no Relatório de: ${result.source}`;
+
+            const textP = document.createElement('p');
+            textP.className = 'report-body';
+            textP.textContent = result.text.trim();
+
+            itemDiv.appendChild(headerDiv);
+            itemDiv.appendChild(textP);
+            searchResultsContainer.appendChild(itemDiv);
+        });
+    } else {
+        noResultsEl.style.display = 'block';
+        noResultsEl.textContent = 'Nenhuma linha encontrada com o termo pesquisado.';
+    }
+}
+
+function mostrarRelatorioCompletoDoMes(month) {
+    const mesSelect = document.getElementById('filterMes');
+    mesSelect.value = month;
+    mesSelect.dispatchEvent(new Event('change'));
+}
+
+function limparBusca() {
+    const relatoriosContainer = document.getElementById('relatoriosContainer');
+    const searchResultsContainer = document.getElementById('searchResultsContainer');
+    const noResultsEl = document.getElementById('noResults');
+    
+    document.getElementById('searchBox').value = '';
+    
+    searchResultsContainer.style.display = 'none';
+    searchResultsContainer.innerHTML = '';
+    relatoriosContainer.style.display = 'block';
+    
+    if (relatoriosContainer.children.length > 0) {
+        noResultsEl.style.display = 'none';
+    } else {
+        noResultsEl.style.display = 'block';
+        noResultsEl.textContent = 'Nenhum relatório encontrado para o mês selecionado.';
+    }
+}
+
+window.onload = () => {
+    const user = localStorage.getItem('dtpoUser');
+    const role = localStorage.getItem('dtpoUserRole');
+    if (user) {
+        document.getElementById('userDisplay').innerText = user;
+    }
+    if (role === 'admin') {
+         document.querySelectorAll('.admin-link').forEach(link => {
+            link.style.display = 'inline-flex';
+        });
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const valor = params.get('valor');
+    const mesSelect = document.getElementById('filterMes');
+    
+    carregarFiltros(valor);
+    renderizarRelatoriosIniciais();
+
+    mesSelect.onchange = () => {
+        renderizarRelatoriosIniciais();
+        limparBusca();
+    };
+    
+    document.getElementById('searchBox').addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            executarBusca();
+        }
+    });
+
+    feather.replace();
+};
+</script>
+
+</body>
+</html>

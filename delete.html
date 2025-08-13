@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Excluir Dados - DTPO Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --secondary-color: #6c757d;
+            --background-color: #f4f6f9;
+            --card-background: #ffffff;
+            --text-color: #343a40;
+            --text-muted: #6c757d;
+            --border-color: #e2e8f0;
+            --border-radius: 8px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        /* --- Navegação Principal --- */
+        .main-header {
+            background-color: var(--card-background);
+            box-shadow: var(--shadow);
+            padding: 0 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 64px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .header-left { display: flex; align-items: center; gap: 30px; }
+        .logo { font-size: 1.25rem; font-weight: 600; }
+        .main-nav a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-weight: 500;
+            padding: 22px 10px;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease-in-out;
+        }
+        .main-nav a:hover, .main-nav a.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        .user-controls { display: flex; align-items: center; gap: 15px; }
+        .user-info { font-size: 0.9rem; color: var(--text-muted); }
+        .admin-link { display: none; }
+
+        .main-content {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 0 25px;
+        }
+        .content-card {
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 25px;
+        }
+        .content-card h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+            color: #dc3545;
+        }
+        p.warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 4px;
+            color: #664d03;
+        }
+        
+        .entry-list { list-style: none; padding: 0; margin-top: 20px; }
+        .entry-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 15px; border: 1px solid var(--border-color); border-radius: var(--border-radius); 
+            margin-bottom: 10px; transition: all 0.2s ease-in-out; 
+        }
+        .entry-item:hover { border-color: #ffc107; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .entry-item span { font-weight: 500; }
+        
+        button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            padding: 8px 15px;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease-in-out;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .delete-btn { background-color: #dc3545; color: white; }
+        .delete-btn:hover { background-color: #c82333; }
+        
+        #toast { visibility: hidden; min-width: 250px; margin-left: -125px; background-color: #333; color: #fff; text-align: center; border-radius: var(--border-radius); padding: 16px; position: fixed; z-index: 1001; left: 50%; top: 30px; font-size: 17px; opacity: 0; box-shadow: 0 5px 15px rgba(0,0,0,0.2); transition: all 0.5s ease-in-out; }
+        #toast.show { visibility: visible; opacity: 1; top: 80px; }
+        #toast.success { background-color: #198754; }
+    </style>
+</head>
+<body>
+
+<header class="main-header">
+    <div class="header-left">
+        <div class="logo">DTPO Dashboard</div>
+        <nav class="main-nav">
+            <a href="index.html"><i data-feather="home"></i>Dashboard</a>
+            <a href="graficos.html"><i data-feather="pie-chart"></i>Gráficos</a>
+            <a href="relatorio.html"><i data-feather="file-text"></i>Relatórios</a>
+            <a href="add.html" class="admin-link"><i data-feather="plus-circle"></i>Adicionar Dados</a>
+            <a href="delete.html" class="admin-link active"><i data-feather="trash-2"></i>Excluir Dados</a>
+        </nav>
+    </div>
+    <div class="user-controls">
+        <div class="user-info">
+            Bem-vindo, <span id="userDisplay">Visitante</span>!
+        </div>
+    </div>
+</header>
+
+<div class="main-content">
+    <div class="content-card">
+        <h3>Excluir Lançamentos Mensais</h3>
+        <p class="warning">
+            <strong>Atenção:</strong> Clicar em "Excluir" removerá permanentemente o registro do mês/setor correspondente. Esta ação não pode ser desfeita.
+        </p>
+        <ul id="entryList" class="entry-list"></ul>
+        <p id="noData" style="display: none;">Nenhum dado para excluir.</p>
+    </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const setoresConfig = {
+    'coc': { nome: 'COC' },
+    'dtpo3g': { nome: 'DTPO-3G' },
+    'dtpo2': { nome: 'DTPO-2' }
+};
+
+function showToast(message, type = 'success') {
+    const toast = document.getElementById("toast");
+    toast.textContent = message;
+    toast.className = `show ${type}`;
+    setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+}
+
+function carregarEntradas() {
+    const list = document.getElementById('entryList');
+    const noDataEl = document.getElementById('noData');
+    list.innerHTML = '';
+    
+    const dados = localStorage.getItem('dtpoDados') ? JSON.parse(localStorage.getItem('dtpoDados')) : [];
+
+    if (dados.length === 0) {
+        noDataEl.style.display = 'block';
+        return;
+    }
+
+    dados.sort((a, b) => b.data.localeCompare(a.data) || a.setor.localeCompare(b.setor));
+
+    dados.forEach(entry => {
+        const li = document.createElement('li');
+        li.className = 'entry-item';
+        
+        const info = document.createElement('span');
+        info.textContent = `Período: ${entry.data} - Setor: ${setoresConfig[entry.setor]?.nome || entry.setor}`;
+        
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.innerHTML = '<i data-feather="trash"></i> Excluir';
+        deleteBtn.onclick = () => excluirEntrada(entry.data, entry.setor);
+
+        li.appendChild(info);
+        li.appendChild(deleteBtn);
+        list.appendChild(li);
+    });
+    feather.replace();
+}
+
+function excluirEntrada(data, setor) {
+    const confirmacao = confirm(`Tem certeza que deseja excluir TODOS os dados do período ${data} para o setor ${setoresConfig[setor]?.nome || setor}?\n\nEsta ação é irreversível!`);
+
+    if (!confirmacao) return;
+
+    let dadosNumericos = localStorage.getItem('dtpoDados') ? JSON.parse(localStorage.getItem('dtpoDados')) : [];
+    const dadosNumericosAtualizados = dadosNumericos.filter(d => !(d.data === data && d.setor === setor));
+    localStorage.setItem('dtpoDados', JSON.stringify(dadosNumericosAtualizados));
+
+    let dadosTextuais = localStorage.getItem('dtpoRegistrosTextuais') ? JSON.parse(localStorage.getItem('dtpoRegistrosTextuais')) : [];
+    const dadosTextuaisAtualizados = dadosTextuais.filter(d => !(d.data === data && d.setor === setor));
+    localStorage.setItem('dtpoRegistrosTextuais', JSON.stringify(dadosTextuaisAtualizados));
+
+    showToast('Registro excluído com sucesso!');
+    setTimeout(() => location.reload(), 1500);
+}
+
+window.onload = () => {
+    const user = localStorage.getItem('dtpoUser');
+    const role = localStorage.getItem('dtpoUserRole');
+    if (role !== 'admin') {
+        alert("Acesso negado. Você não tem permissão para acessar esta página.");
+        window.location.href = 'index.html';
+        return;
+    }
+
+    if (user) {
+        document.getElementById('userDisplay').innerText = user;
+    }
+    document.querySelectorAll('.admin-link').forEach(link => {
+        link.style.display = 'inline-flex';
+    });
+    
+    carregarEntradas();
+    feather.replace();
+};
+</script>
+
+</body>
+</html>
