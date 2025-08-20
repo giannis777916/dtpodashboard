@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DTPO Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --secondary-color: #6c757d;
+            --background-color: #f4f6f9;
+            --card-background: #ffffff;
+            --text-color: #343a40;
+            --text-muted: #6c757d;
+            --border-color: #e2e8f0;
+            --border-radius: 8px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+
+            --setor-coc: #007bff;
+            --setor-dtpo3g: #ffc107;
+            --setor-dtpo2: #28a745;
+            --setor-unificado: #6c757d;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.5;
+        }
+
+        /* --- Navegação Principal Responsiva --- */
+        .main-header {
+            background-color: var(--card-background);
+            box-shadow: var(--shadow);
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 64px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .header-left { display: flex; align-items: center; gap: 20px; }
+        .logo { font-size: 1.2rem; font-weight: 600; flex-shrink: 0; }
+        
+        .main-nav { display: flex; gap: 5px; }
+        .main-nav a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-weight: 500;
+            padding: 22px 10px;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease-in-out;
+        }
+        .main-nav a:hover, .main-nav a.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        
+        .user-controls { display: flex; align-items: center; gap: 15px; }
+        .user-info { font-size: 0.9rem; color: var(--text-muted); }
+        .admin-link { display: none; }
+
+        .menu-toggle { display: none; background: none; border: none; cursor: pointer; padding: 5px; }
+
+        /* --- Container Principal --- */
+        .app-container { max-width: 1600px; margin: 20px auto; padding: 0 20px; }
+        
+        /* --- Estilos Gerais para Botões e Inputs --- */
+        button {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            cursor: pointer; border: 1px solid transparent; padding: 10px 15px;
+            border-radius: var(--border-radius); font-weight: 500; text-decoration: none;
+            transition: all 0.2s ease-in-out;
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-danger { background-color: #dc3545; color: white; }
+
+        input, select {
+            padding: 10px; border-radius: var(--border-radius); border: 1px solid var(--border-color);
+            background-color: var(--card-background); width: 100%; box-sizing: border-box;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        input:focus, select:focus {
+            outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+        }
+        label { font-weight: 600; color: var(--text-color); }
+        
+        /* --- Filtros --- */
+        .filters-container {
+            background: var(--card-background); padding: 20px; border-radius: var(--border-radius);
+            box-shadow: var(--shadow); margin-bottom: 25px;
+        }
+        .filters-container h3 { margin-top: 0; }
+        .filters { display: flex; flex-wrap: wrap; gap: 20px; }
+        .filter-group { display: flex; flex-direction: column; gap: 5px; flex: 1 1 200px; }
+        .sector-checkboxes { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 5px; }
+        .sector-checkboxes label { font-weight: normal; }
+
+        /* --- Layout de Cards --- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+        }
+        .metric-card {
+            background: var(--card-background); border-radius: var(--border-radius);
+            box-shadow: var(--shadow); display: flex; flex-direction: column;
+            transition: all 0.2s ease-in-out; overflow: hidden;
+        }
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+        }
+        .card-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 20px;
+        }
+        .card-header h4 { margin: 0; font-size: 1.1rem; }
+        .card-header .report-link a { font-size: 0.85rem; text-decoration: none; }
+        .card-header .report-link a:hover { text-decoration: underline; }
+        
+        .header-coc { background-color: var(--setor-coc); color: white; }
+        .header-dtpo3g { background-color: var(--setor-dtpo3g); color: var(--text-color); }
+        .header-dtpo2 { background-color: var(--setor-dtpo2); color: white; }
+        .header-unificado { background-color: var(--setor-unificado); color: white; }
+        .header-coc a, .header-dtpo2 a, .header-unificado a { color: white !important; }
+        .header-dtpo3g a { color: var(--text-color) !important; }
+
+        .card-content { padding: 10px 20px 20px 20px; }
+        .card-content .metric-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 5px; border-bottom: 1px solid #f1f5f9;
+        }
+        .card-content .metric-item:last-child { border-bottom: none; }
+        .metric-item span { color: var(--text-muted); }
+        .metric-item strong { font-size: 1.1rem; font-family: "Menlo", "Monaco", monospace; }
+
+        /* --- Modal de Login --- */
+        #loginModal { display: none; position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
+        .login-content { background-color: #fefefe; margin: 15% auto; padding: 25px; border: 1px solid #888; width: 90%; max-width: 400px; border-radius: var(--border-radius); position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .close-btn { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+
+        /* =================================== */
+        /* === MEDIA QUERIES PARA RESPONSIVIDADE === */
+        /* =================================== */
+
+        /* Telas de Tablet e Celular (até 1024px) */
+        @media (max-width: 1024px) {
+            .main-nav {
+                display: none;
+                flex-direction: column;
+                position: absolute;
+                top: 64px;
+                left: 0;
+                width: 100%;
+                background-color: var(--card-background);
+                box-shadow: var(--shadow);
+                border-top: 1px solid var(--border-color);
+            }
+            .main-nav.nav-open {
+                display: flex;
+            }
+            .main-nav a {
+                padding: 15px 20px;
+                border-bottom: 1px solid var(--border-color);
+            }
+            .main-nav a:hover, .main-nav a.active {
+                border-bottom: 1px solid var(--border-color);
+                background-color: var(--background-color);
+            }
+            .menu-toggle {
+                display: block;
+            }
+            .user-info {
+                display: none; /* Opcional: esconder para ganhar espaço */
+            }
+        }
+
+        /* Telas de Celular (até 767px) */
+        @media (max-width: 767px) {
+            body { font-size: 0.95rem; }
+            .app-container, .main-header { padding: 0 15px; }
+            .logo { font-size: 1.1rem; }
+            .header-left { gap: 10px; }
+
+            .filters { flex-direction: column; }
+            .dashboard-grid {
+                grid-template-columns: 1fr; /* Uma coluna em telas pequenas */
+                gap: 20px;
+            }
+            .metric-item span, .metric-item strong { font-size: 0.9rem; }
+            .login-content { width: 95%; margin-top: 25%; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="main-header">
+    <div class="header-left">
+        <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu">
+            <i data-feather="menu"></i>
+        </button>
+        <div class="logo">DTPO Dashboard</div>
+        <nav class="main-nav" id="mainNav">
+            <a href="index.html" class="active"><i data-feather="home"></i>Dashboard</a>
+            <a href="graficos.html"><i data-feather="pie-chart"></i>Gráficos</a>
+            <a href="relatorio.html"><i data-feather="file-text"></i>Relatórios</a>
+            <a href="add.html" class="admin-link"><i data-feather="plus-circle"></i>Adicionar Dados</a>
+            <a href="delete.html" class="admin-link"><i data-feather="trash-2"></i>Excluir Dados</a>
+        </nav>
+    </div>
+    <div class="user-controls">
+        <div class="user-info">
+            Bem-vindo, <span id="userDisplay">Visitante</span>!
+        </div>
+        <button class="btn-primary" id="loginBtn" onclick="abrirLoginModal()"><i data-feather="log-in"></i> Login</button>
+        <button class="btn-danger" id="logoutBtn" onclick="logout()" style="display: none;"><i data-feather="log-out"></i> Sair</button>
+    </div>
+</header>
+
+<div id="loginModal">
+    <div class="login-content">
+        <span class="close-btn" onclick="fecharLoginModal()">&times;</span>
+        <h2>Login Administrador</h2>
+        <label for="username">Usuário:</label>
+        <input type="text" id="username" placeholder="Digite seu usuário" />
+        <label for="password">Senha:</label>
+        <input type="password" id="password" placeholder="Digite sua senha" />
+        <button onclick="login()" class="btn-primary" style="width: 100%; margin-top: 15px;">Entrar</button>
+        <p id="loginError" style="color: red;"></p>
+    </div>
+</div>
+
+<div class="app-container">
+    <div class="filters-container">
+        <h3>Filtros</h3>
+        <div class="filters">
+            <div class="filter-group">
+                <label for="filterPeriod">Agrupar Período:</label>
+                <select id="filterPeriod" onchange="carregarFiltrosDePeriodo()">
+                    <option value="all">Total Acumulado</option>
+                    <option value="month">Por Mês</option>
+                    <option value="quarter">Por Trimestre</option>
+                    <option value="year">Por Ano</option>
+                </select>
+            </div>
+            <div class="filter-group" id="filterValueContainer" style="display:none;">
+                <label for="filterValue" id="filterValueLabel">Selecionar Período:</label>
+                <select id="filterValue" onchange="renderizarDashboard()"></select>
+            </div>
+            <div class="filter-group">
+                <label for="sectorCheckboxes">Filtrar Setores:</label>
+                <div id="sectorCheckboxes" class="sector-checkboxes"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboardGrid" class="dashboard-grid">
+        <!-- Os cards de métricas serão inseridos aqui pelo JavaScript -->
+    </div>
+</div>
+
+<script>
+// ===================================================================================
+// CONFIG.JS (embutido)
+// ===================================================================================
+const camposConfig = {
+    'sol_156_recebidas': { nome: 'Solicitações 156 Recebidas', tipo: 'numero' }, 'sol_156_respondidas': { nome: 'Solicitações 156 Respondidas', tipo: 'numero' }, 'vistorias': { nome: 'Vistorias', tipo: 'numero' },
+    'coc_alvaras_impl_manut': { nome: 'Alvarás Impl./Manut.', tipo: 'numero' }, 'coc_notif_sistema': { nome: 'Notificações via sistema', tipo: 'numero' }, 'coc_notif_email': { nome: 'Notificações por email', tipo: 'numero' }, 'coc_multas_qtd': { nome: 'Multas (Quantidade)', tipo: 'numero' }, 'coc_arrec_alvaras': { nome: 'Arrecadação Alvarás', tipo: 'moeda' }, 'coc_arrec_multas': { nome: 'Arrecadação Multas', tipo: 'moeda' },
+    'dtpo3g_atend_sup': { nome: 'Atendidos SUP e relatórios', tipo: 'numero' }, 'dtpo3g_amt': { nome: 'AMT (novos)', tipo: 'numero' }, 'dtpo3g_rap_pgt': { nome: 'RAP e PGT', tipo: 'numero' }, 'dtpo3g_pesquisa': { nome: 'Pesquisa', tipo: 'numero' }, 'dtpo3g_reunioes': { nome: 'Reuniões', tipo: 'numero' }, 'dtpo3g_emails_respondidos': { nome: 'Emails respondidos', tipo: 'numero' }, 'dtpo3g_rev_prog_semaforica': { nome: 'Revisão prog. semafórica', tipo: 'numero' }, 'dtpo3g_alt_sema_prog': { nome: 'Alterações Semafóricas Programadas', tipo: 'numero' }, 'dtpo3g_alt_sema_nao_prog': { nome: 'Alterações Semafóricas Não Programadas', tipo: 'numero' }, 'dtpo3g_analise_sydle': { nome: 'Análise de projetos viários (SYDLE)', tipo: 'numero' }, 'dtpo3g_op_obras': { nome: 'Operação em obras viárias', tipo: 'numero' }, 'dtpo3g_novos_croquis': { nome: 'Elaboração de novos croquis', tipo: 'numero' }, 'dtpo3g_vida_transito': { nome: 'Análise de Acidentes', tipo: 'numero' }, 'dtpo3g_fisc_contratos': { nome: 'Fiscalização de Contratos', tipo: 'numero' }, 'dtpo3g_reuniao_cmu': { nome: 'Reunião CMU', tipo: 'numero' }, 'dtpo3g_autorizacoes': { nome: 'Autorizações', tipo: 'numero' },
+    'dtpo2_serv_equipe_propria': { nome: 'Serviços pela Equipe Própria', tipo: 'numero' }, 'dtpo2_serv_contrato_dataprom': { nome: 'Serviços via Contrato Dataprom', tipo: 'numero' }, 'dtpo2_serv_licitacao_smop': { nome: 'Serviços via Licitação SMOP', tipo: 'numero' }, 'dtpo2_servcomp_analise_projetos': { nome: 'Análise e Correção de Projetos', tipo: 'numero' }, 'dtpo2_servcomp_elaboracao_projeto': { nome: 'Solicitação de Elaboração de Projeto', tipo: 'numero' }, 'dtpo2_servcomp_acomp_obras_mitig': { nome: 'Acompanhamentos de Obras (mitigadoras)', tipo: 'numero' }, 'dtpo2_servcomp_vistorias_contrato': { nome: 'Vistorias de Obra (Contrato Dataprom)', tipo: 'numero' }, 'dtpo2_pedestre_implantados': { nome: 'Porta-Focos de Pedestre Implantados', tipo: 'numero' }, 'dtpo2_pedestre_revitalizados': { nome: 'Porta-Focos de Pedestre Revitalizados', tipo: 'numero' }
+};
+const gruposConfig = {
+    'geral_unificado': { nome: 'Resumo Geral Unificado', campos: ['sol_156_recebidas', 'sol_156_respondidas', 'vistorias'] },
+    'coc_atividades': { nome: 'Atividades COC', campos: ['coc_alvaras_impl_manut', 'coc_notif_sistema', 'coc_notif_email', 'coc_multas_qtd'] }, 'coc_arrecadacao': { nome: 'Arrecadação COC', campos: ['coc_arrec_alvaras', 'coc_arrec_multas'] },
+    'dtpo3g_atendimentos': { nome: 'Atendimentos DTPO-3G', campos: ['dtpo3g_atend_sup', 'dtpo3g_emails_respondidos'] }, 'dtpo3g_analises': { nome: 'Análises e Vistorias DTPO-3G', campos: ['dtpo3g_amt', 'dtpo3g_rap_pgt', 'dtpo3g_pesquisa', 'dtpo3g_analise_sydle', 'dtpo3g_novos_croquis'] }, 'dtpo3g_operacional': { nome: 'Operacional DTPO-3G', campos: ['dtpo3g_reunioes', 'dtpo3g_rev_prog_semaforica', 'dtpo3g_alt_sema_prog', 'dtpo3g_alt_sema_nao_prog', 'dtpo3g_op_obras', 'dtpo3g_vida_transito', 'dtpo3g_fisc_contratos', 'dtpo3g_reuniao_cmu', 'dtpo3g_autorizacoes'] },
+    'dtpo2_servicos': { nome: 'Serviços em Semáforos DTPO-2', campos: ['dtpo2_serv_equipe_propria', 'dtpo2_serv_contrato_dataprom', 'dtpo2_serv_licitacao_smop'] }, 'dtpo2_complementar': { nome: 'Serviços Complementares DTPO-2', campos: ['dtpo2_servcomp_analise_projetos', 'dtpo2_servcomp_elaboracao_projeto', 'dtpo2_servcomp_acomp_obras_mitig', 'dtpo2_servcomp_vistorias_contrato'] }, 'dtpo2_pedestre': { nome: 'Semáforos de Pedestre DTPO-2', campos: ['dtpo2_pedestre_implantados', 'dtpo2_pedestre_revitalizados'] }
+};
+const setoresConfig = {
+    'coc': { nome: 'COC', grupos: ['geral_unificado', 'coc_atividades', 'coc_arrecadacao'] },
+    'dtpo3g': { nome: 'DTPO-3G', grupos: ['geral_unificado', 'dtpo3g_atendimentos', 'dtpo3g_analises', 'dtpo3g_operacional'] },
+    'dtpo2': { nome: 'DTPO-2', grupos: ['dtpo2_servicos', 'dtpo2_complementar', 'dtpo2_pedestre'] }
+};
+// ===================================================================================
+
+const users = { "admin": "1234" };
+const grupoParaSetorMap = {};
+Object.keys(setoresConfig).forEach(idSetor => {
+    setoresConfig[idSetor].grupos.forEach(idGrupo => {
+        if (!grupoParaSetorMap[idGrupo]) grupoParaSetorMap[idGrupo] = [];
+        grupoParaSetorMap[idGrupo].push(idSetor);
+    });
+});
+
+function pegarDados() { return JSON.parse(localStorage.getItem('dtpoDados') || '[]'); }
+
+function atualizarVisaoUsuario(user, role) {
+    document.getElementById('userDisplay').innerText = user || 'Visitante';
+    const isAdmin = role === 'admin';
+    document.querySelectorAll('.admin-link').forEach(link => {
+        link.style.display = isAdmin ? 'inline-flex' : 'none';
+    });
+    document.getElementById('loginBtn').style.display = isAdmin ? 'none' : 'inline-flex';
+    document.getElementById('logoutBtn').style.display = isAdmin ? 'inline-flex' : 'none';
+    renderizarDashboard();
+}
+
+function gerarCheckboxesSetores() {
+    const container = document.getElementById('sectorCheckboxes');
+    container.innerHTML = '';
+    Object.keys(setoresConfig).forEach(idSetor => {
+        const label = document.createElement('label');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox'; checkbox.value = idSetor; checkbox.checked = true;
+        checkbox.onchange = renderizarDashboard;
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(setoresConfig[idSetor].nome));
+        container.appendChild(label);
+    });
+}
+
+function carregarFiltrosDePeriodo() {
+    const periodo = document.getElementById('filterPeriod').value;
+    const filterValueSelect = document.getElementById('filterValue');
+    const container = document.getElementById('filterValueContainer');
+    filterValueSelect.innerHTML = '';
+    if (periodo === 'all') {
+        container.style.display = 'none';
+    } else {
+        container.style.display = 'flex';
+        const label = document.getElementById('filterValueLabel');
+        let options = new Set();
+        const dados = pegarDados();
+        if (periodo === 'year') {
+            label.innerText = "Selecionar Ano:";
+            dados.forEach(d => options.add(d.data.slice(0, 4)));
+        } else if (periodo === 'month') {
+            label.innerText = "Selecionar Mês:";
+            dados.forEach(d => options.add(d.data.slice(0, 7)));
+        } else if (periodo === 'quarter') {
+            label.innerText = "Selecionar Trimestre:";
+            dados.forEach(d => {
+                const ano = d.data.slice(0, 4);
+                const mes = parseInt(d.data.slice(5, 7));
+                const tri = Math.floor((mes - 1) / 3) + 1;
+                options.add(`${ano}-T${tri}`);
+            });
+        }
+        Array.from(options).sort().reverse().forEach(opt => {
+            const option = document.createElement('option');
+            option.value = opt; option.text = opt;
+            filterValueSelect.appendChild(option);
+        });
+    }
+    renderizarDashboard();
+}
+
+function renderizarDashboard() {
+    const todosDados = pegarDados();
+    const setoresSelecionados = Array.from(document.querySelectorAll('#sectorCheckboxes input:checked')).map(cb => cb.value);
+    const periodo = document.getElementById('filterPeriod').value;
+    const valorPeriodo = document.getElementById('filterValue').value;
+    const userRole = localStorage.getItem('dtpoUserRole');
+    let dadosFiltrados = todosDados;
+
+    if (periodo !== 'all' && valorPeriodo) {
+        if (periodo === 'month' || periodo === 'year') {
+            dadosFiltrados = dadosFiltrados.filter(d => d.data.startsWith(valorPeriodo));
+        } else if (periodo === 'quarter') {
+            const [ano, q] = valorPeriodo.split('-T');
+            const tri = parseInt(q);
+            dadosFiltrados = dadosFiltrados.filter(d => {
+                const dAno = d.data.slice(0, 4);
+                const dMes = parseInt(d.data.slice(5, 7));
+                const dTri = Math.floor((dMes - 1) / 3) + 1;
+                return dAno === ano && dTri === tri;
+            });
+        }
+    }
+    dadosFiltrados = dadosFiltrados.filter(d => setoresSelecionados.includes(d.setor));
+
+    const totais = {};
+    dadosFiltrados.forEach(d => {
+        for (const key in d) {
+            if (key !== 'data' && key !== 'setor') {
+                totais[key] = (totais[key] || 0) + parseFloat(d[key]);
+            }
+        }
+    });
+    
+    const grid = document.getElementById('dashboardGrid');
+    grid.innerHTML = '';
+    if (dadosFiltrados.length === 0 && (periodo !== 'all' && valorPeriodo)) {
+        grid.innerHTML = `<p style="grid-column: 1 / -1; text-align: center;">Nenhum dado encontrado para o filtro selecionado.</p>`;
+        return;
+    }
+
+    const gruposParaRenderizar = new Set();
+    setoresSelecionados.forEach(idSetor => {
+        if (setoresConfig[idSetor]) setoresConfig[idSetor].grupos.forEach(idGrupo => gruposParaRenderizar.add(idGrupo));
+    });
+
+    Array.from(gruposParaRenderizar).sort((a,b) => a.localeCompare(b)).forEach(idGrupo => {
+        const grupoConf = gruposConfig[idGrupo];
+        if (!grupoConf) return;
+
+        const card = document.createElement('div');
+        card.className = 'metric-card';
+        
+        let cardContentHTML = '';
+        let hasContent = false;
+        
+        grupoConf.campos.forEach(idCampo => {
+            const campoConf = camposConfig[idCampo];
+            if (!campoConf || (userRole !== 'admin' && campoConf.tipo === 'moeda')) return;
+
+            hasContent = true;
+            let valor = totais[idCampo] || 0;
+            if (campoConf.tipo === 'moeda') {
+                valor = valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            }
+            cardContentHTML += `<div class="metric-item"><span>${campoConf.nome}</span><strong>${valor}</strong></div>`;
+        });
+
+        if (hasContent) {
+            let nomeGrupo = grupoConf.nome;
+            let headerClass = '';
+            
+            if (idGrupo === 'geral_unificado') {
+                if (setoresSelecionados.length === 1) {
+                    const idSetorUnico = setoresSelecionados[0];
+                    headerClass = `header-${idSetorUnico}`;
+                    nomeGrupo = `Resumo Geral - ${setoresConfig[idSetorUnico].nome}`;
+                } else {
+                    headerClass = 'header-unificado';
+                }
+            } else {
+                const idSetorDoGrupo = grupoParaSetorMap[idGrupo]?.[0];
+                if (idSetorDoGrupo) {
+                    headerClass = `header-${idSetorDoGrupo}`;
+                }
+            }
+            
+            let reportLinkHTML = '';
+            if (idGrupo === 'dtpo2_servicos') {
+                let linkUrl = 'relatorio.html';
+                if (periodo === 'month' && valorPeriodo) linkUrl += `?valor=${valorPeriodo}`;
+                reportLinkHTML = `<span class="report-link"><a href="${linkUrl}">Ver Relatório</a></span>`;
+            }
+
+            card.innerHTML = `
+                <div class="card-header ${headerClass}">
+                    <h4>${nomeGrupo}</h4>
+                    ${reportLinkHTML}
+                </div>
+                <div class="card-content">${cardContentHTML}</div>
+            `;
+            grid.appendChild(card);
+        }
+    });
+}
+
+function login() { 
+    const u = document.getElementById('username').value.trim(); 
+    const p = document.getElementById('password').value; 
+    if(users[u] && users[u] === p) {
+        const role = u === 'admin' ? 'admin' : 'viewer';
+        localStorage.setItem('dtpoUser', u);
+        localStorage.setItem('dtpoUserRole', role);
+        atualizarVisaoUsuario(u, role);
+        fecharLoginModal();
+    } else { 
+        document.getElementById('loginError').innerText = 'Usuário ou senha inválidos'; 
+    } 
+}
+function logout() { 
+    localStorage.removeItem('dtpoUser'); 
+    localStorage.removeItem('dtpoUserRole');
+    atualizarVisaoUsuario(null, 'viewer');
+}
+
+function abrirLoginModal() { document.getElementById('loginModal').style.display = 'block'; }
+function fecharLoginModal() {
+    document.getElementById('loginModal').style.display = 'none';
+    document.getElementById('username').value = ''; 
+    document.getElementById('password').value = ''; 
+    document.getElementById('loginError').innerText = ''; 
+}
+
+// Lógica do menu responsivo
+document.getElementById('menuToggle').addEventListener('click', function() {
+    document.getElementById('mainNav').classList.toggle('nav-open');
+});
+
+window.onload = () => { 
+    const u = localStorage.getItem('dtpoUser');
+    const r = localStorage.getItem('dtpoUserRole');
+    atualizarVisaoUsuario(u, r);
+    gerarCheckboxesSetores();
+    carregarFiltrosDePeriodo();
+    feather.replace();
+};
+</script>
+
+</body>
+</html>

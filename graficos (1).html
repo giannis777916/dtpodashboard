@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gerador de Gráficos - DTPO Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --secondary-color: #6c757d;
+            --background-color: #f4f6f9;
+            --card-background: #ffffff;
+            --text-color: #343a40;
+            --text-muted: #6c757d;
+            --border-color: #e2e8f0;
+            --border-radius: 8px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+
+            --setor-coc: #007bff;
+            --setor-dtpo3g: #ffc107;
+            --setor-dtpo2: #28a745;
+            --setor-unificado: #6c757d;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        /* --- Navegação Principal Responsiva --- */
+        .main-header {
+            background-color: var(--card-background);
+            box-shadow: var(--shadow);
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 64px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .header-left { display: flex; align-items: center; gap: 20px; }
+        .logo { font-size: 1.2rem; font-weight: 600; flex-shrink: 0; }
+        
+        .main-nav { display: flex; gap: 5px; }
+        .main-nav a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-weight: 500;
+            padding: 22px 10px;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease-in-out;
+        }
+        .main-nav a:hover, .main-nav a.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        
+        .user-controls { display: flex; align-items: center; gap: 15px; }
+        .user-info { font-size: 0.9rem; color: var(--text-muted); }
+        .admin-link { display: none; }
+        .menu-toggle { display: none; background: none; border: none; cursor: pointer; padding: 5px; }
+
+        .main-content {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        .controls-panel, .chart-card {
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+        .controls-panel h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
+        }
+        .control-group { display: flex; flex-direction: column; gap: 8px; }
+        .control-group label { font-weight: 600; }
+        
+        .action-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
+        .action-buttons button { width: 100%; }
+        
+        button {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            cursor: pointer; border: 1px solid transparent; padding: 10px 15px;
+            border-radius: var(--border-radius); font-weight: 500; text-decoration: none;
+            transition: all 0.2s ease-in-out;
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .btn-primary { background-color: #0d6efd; color: white; }
+        .btn-secondary { background-color: #6c757d; color: white; }
+
+        input, select {
+            padding: 10px; border-radius: var(--border-radius); border: 1px solid var(--border-color);
+            background-color: var(--card-background); width: 100%; box-sizing: border-box;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        input:focus, select:focus {
+            outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+        }
+
+        .checkbox-group-container {
+            border: 1px solid var(--border-color); border-radius: var(--border-radius);
+            padding: 10px; background-color: #f8f9fa; max-height: 120px; overflow-y: auto;
+        }
+        .checkbox-group-container label {
+            display: flex; align-items: center; padding: 5px; font-weight: normal; cursor: pointer; border-radius: 4px;
+        }
+        .checkbox-group-container label:hover { background-color: #e9ecef; }
+        .checkbox-group-container input[type="checkbox"] { margin-right: 8px; width: auto; }
+        
+        .color-dot { height: 12px; width: 12px; border-radius: 50%; margin-right: 8px; flex-shrink: 0; }
+        .dot-all { background-color: var(--secondary-color); }
+        .dot-coc { background-color: var(--setor-coc); }
+        .dot-dtpo3g { background-color: var(--setor-dtpo3g); }
+        .dot-dtpo2 { background-color: var(--setor-dtpo2); }
+
+        .chart-card { position: relative; width: 100%; min-height: 450px; box-sizing: border-box; }
+        #chartSpinner { display: none; position: absolute; top: 50%; left: 50%; width: 60px; height: 60px; border: 8px solid #f3f3f3; border-top: 8px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; transform: translate(-50%, -50%); z-index: 10; }
+        @keyframes spin { 0% { transform: translate(-50%, -50%) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+
+        /* =================================== */
+        /* === MEDIA QUERIES PARA RESPONSIVIDADE === */
+        /* =================================== */
+
+        @media (max-width: 1024px) {
+            .main-nav {
+                display: none; flex-direction: column; position: absolute; top: 64px; left: 0; width: 100%;
+                background-color: var(--card-background); box-shadow: var(--shadow); border-top: 1px solid var(--border-color);
+            }
+            .main-nav.nav-open { display: flex; }
+            .main-nav a { padding: 15px 20px; border-bottom: 1px solid var(--border-color); }
+            .main-nav a:hover, .main-nav a.active {
+                border-bottom: 1px solid var(--border-color); background-color: var(--background-color);
+            }
+            .menu-toggle { display: block; }
+            .action-buttons { flex-direction: row; }
+        }
+
+        @media (max-width: 767px) {
+            .main-content, .main-header { padding: 0 15px; }
+            .controls-grid { grid-template-columns: 1fr; gap: 20px; }
+            .action-buttons { flex-direction: column; }
+            .chart-card { padding: 10px; min-height: 350px; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="main-header">
+    <div class="header-left">
+        <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu">
+            <i data-feather="menu"></i>
+        </button>
+        <div class="logo">DTPO Dashboard</div>
+        <nav class="main-nav" id="mainNav">
+            <a href="index.html"><i data-feather="home"></i>Dashboard</a>
+            <a href="graficos.html" class="active"><i data-feather="pie-chart"></i>Gráficos</a>
+            <a href="relatorio.html"><i data-feather="file-text"></i>Relatórios</a>
+            <a href="add.html" class="admin-link"><i data-feather="plus-circle"></i>Adicionar Dados</a>
+            <a href="delete.html" class="admin-link"><i data-feather="trash-2"></i>Excluir Dados</a>
+        </nav>
+    </div>
+    <div class="user-controls">
+        <div class="user-info">
+            Bem-vindo, <span id="userDisplay">Visitante</span>!
+        </div>
+    </div>
+</header>
+
+<div class="main-content">
+    <div class="controls-panel">
+        <h3>Configurações do Gráfico</h3>
+        <div class="controls-grid">
+            <div class="control-group">
+                <label>1. Setores</label>
+                <div id="sectorSelectContainer" class="checkbox-group-container"></div>
+            </div>
+            <div class="control-group">
+                <label>2. Métricas</label>
+                <div id="metricSelectContainer" class="checkbox-group-container"></div>
+            </div>
+            <div class="control-group">
+                <label>3. Data de Início</label>
+                <input type="month" id="dateStart">
+            </div>
+            <div class="control-group">
+                <label>4. Data de Fim</label>
+                <input type="month" id="dateEnd">
+            </div>
+            <div class="control-group">
+                <label>5. Agrupar por</label>
+                <select id="periodSelect">
+                    <option value="month">Mensal</option>
+                    <option value="quarter">Trimestral</option>
+                    <option value="year">Anual</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>6. Tipo de Gráfico</label>
+                <select id="chartTypeSelect">
+                    <option value="line">Linha</option>
+                    <option value="bar">Barras</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <div class="action-buttons">
+                    <button id="generateChartBtn" class="btn-primary"><i data-feather="pie-chart"></i> Gerar Gráfico</button>
+                    <button id="exportChartBtn" class="btn-secondary"><i data-feather="download"></i> Exportar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="chart-card">
+        <canvas id="myChart"></canvas>
+        <div id="chartSpinner"></div>
+    </div>
+</div>
+
+<script>
+// ===================================================================================
+// CONFIG.JS (embutido)
+// ===================================================================================
+const camposConfig = {
+    'sol_156_recebidas': { nome: 'Solicitações 156 Recebidas', tipo: 'numero' }, 'sol_156_respondidas': { nome: 'Solicitações 156 Respondidas', tipo: 'numero' }, 'vistorias': { nome: 'Vistorias', tipo: 'numero' },
+    'coc_alvaras_impl_manut': { nome: 'Alvarás Impl./Manut.', tipo: 'numero' }, 'coc_notif_sistema': { nome: 'Notificações via sistema', tipo: 'numero' }, 'coc_notif_email': { nome: 'Notificações por email', tipo: 'numero' }, 'coc_multas_qtd': { nome: 'Multas (Quantidade)', tipo: 'numero' }, 'coc_arrec_alvaras': { nome: 'Arrecadação Alvarás', tipo: 'moeda' }, 'coc_arrec_multas': { nome: 'Arrecadação Multas', tipo: 'moeda' },
+    'dtpo3g_atend_sup': { nome: 'Atendidos SUP e relatórios', tipo: 'numero' }, 'dtpo3g_amt': { nome: 'AMT (novos)', tipo: 'numero' }, 'dtpo3g_rap_pgt': { nome: 'RAP e PGT', tipo: 'numero' }, 'dtpo3g_pesquisa': { nome: 'Pesquisa', tipo: 'numero' }, 'dtpo3g_reunioes': { nome: 'Reuniões', tipo: 'numero' }, 'dtpo3g_emails_respondidos': { nome: 'Emails respondidos', tipo: 'numero' }, 'dtpo3g_rev_prog_semaforica': { nome: 'Revisão prog. semafórica', tipo: 'numero' }, 'dtpo3g_alt_sema_prog': { nome: 'Alterações Semafóricas Programadas', tipo: 'numero' }, 'dtpo3g_alt_sema_nao_prog': { nome: 'Alterações Semafóricas Não Programadas', tipo: 'numero' }, 'dtpo3g_analise_sydle': { nome: 'Análise de projetos viários (SYDLE)', tipo: 'numero' }, 'dtpo3g_op_obras': { nome: 'Operação em obras viárias', tipo: 'numero' }, 'dtpo3g_novos_croquis': { nome: 'Elaboração de novos croquis', tipo: 'numero' }, 'dtpo3g_vida_transito': { nome: 'Análise de Acidentes', tipo: 'numero' }, 'dtpo3g_fisc_contratos': { nome: 'Fiscalização de Contratos', tipo: 'numero' }, 'dtpo3g_reuniao_cmu': { nome: 'Reunião CMU', tipo: 'numero' }, 'dtpo3g_autorizacoes': { nome: 'Autorizações', tipo: 'numero' },
+    'dtpo2_serv_equipe_propria': { nome: 'Serviços pela Equipe Própria', tipo: 'numero' }, 'dtpo2_serv_contrato_dataprom': { nome: 'Serviços via Contrato Dataprom', tipo: 'numero' }, 'dtpo2_serv_licitacao_smop': { nome: 'Serviços via Licitação SMOP', tipo: 'numero' }, 'dtpo2_servcomp_analise_projetos': { nome: 'Análise e Correção de Projetos', tipo: 'numero' }, 'dtpo2_servcomp_elaboracao_projeto': { nome: 'Solicitação de Elaboração de Projeto', tipo: 'numero' }, 'dtpo2_servcomp_acomp_obras_mitig': { nome: 'Acompanhamentos de Obras (mitigadoras)', tipo: 'numero' }, 'dtpo2_servcomp_vistorias_contrato': { nome: 'Vistorias de Obra (Contrato Dataprom)', tipo: 'numero' }, 'dtpo2_pedestre_implantados': { nome: 'Porta-Focos de Pedestre Implantados', tipo: 'numero' }, 'dtpo2_pedestre_revitalizados': { nome: 'Porta-Focos de Pedestre Revitalizados', tipo: 'numero' }
+};
+const gruposConfig = {
+    'geral_unificado': { nome: 'Resumo Geral Unificado', campos: ['sol_156_recebidas', 'sol_156_respondidas', 'vistorias'] },
+    'coc_atividades': { nome: 'Atividades COC', campos: ['coc_alvaras_impl_manut', 'coc_notif_sistema', 'coc_notif_email', 'coc_multas_qtd'] }, 'coc_arrecadacao': { nome: 'Arrecadação COC', campos: ['coc_arrec_alvaras', 'coc_arrec_multas'] },
+    'dtpo3g_atendimentos': { nome: 'Atendimentos DTPO-3G', campos: ['dtpo3g_atend_sup', 'dtpo3g_emails_respondidos'] }, 'dtpo3g_analises': { nome: 'Análises e Vistorias DTPO-3G', campos: ['dtpo3g_amt', 'dtpo3g_rap_pgt', 'dtpo3g_pesquisa', 'dtpo3g_analise_sydle', 'dtpo3g_novos_croquis'] }, 'dtpo3g_operacional': { nome: 'Operacional DTPO-3G', campos: ['dtpo3g_reunioes', 'dtpo3g_rev_prog_semaforica', 'dtpo3g_alt_sema_prog', 'dtpo3g_alt_sema_nao_prog', 'dtpo3g_op_obras', 'dtpo3g_vida_transito', 'dtpo3g_fisc_contratos', 'dtpo3g_reuniao_cmu', 'dtpo3g_autorizacoes'] },
+    'dtpo2_servicos': { nome: 'Serviços em Semáforos DTPO-2', campos: ['dtpo2_serv_equipe_propria', 'dtpo2_serv_contrato_dataprom', 'dtpo2_serv_licitacao_smop'] }, 'dtpo2_complementar': { nome: 'Serviços Complementares DTPO-2', campos: ['dtpo2_servcomp_analise_projetos', 'dtpo2_servcomp_elaboracao_projeto', 'dtpo2_servcomp_acomp_obras_mitig', 'dtpo2_servcomp_vistorias_contrato'] }, 'dtpo2_pedestre': { nome: 'Semáforos de Pedestre DTPO-2', campos: ['dtpo2_pedestre_implantados', 'dtpo2_pedestre_revitalizados'] }
+};
+const setoresConfig = {
+    'coc': { nome: 'COC', grupos: ['geral_unificado', 'coc_atividades', 'coc_arrecadacao'] },
+    'dtpo3g': { nome: 'DTPO-3G', grupos: ['geral_unificado', 'dtpo3g_atendimentos', 'dtpo3g_analises', 'dtpo3g_operacional'] },
+    'dtpo2': { nome: 'DTPO-2', grupos: ['dtpo2_servicos', 'dtpo2_complementar', 'dtpo2_pedestre'] }
+};
+// ===================================================================================
+
+let myChart = null;
+const colorPalette = {
+    coc: 'rgba(0, 123, 255, 0.8)',
+    dtpo3g: 'rgba(255, 193, 7, 0.8)',
+    dtpo2: 'rgba(40, 167, 69, 0.8)',
+};
+
+function populateSectorCheckboxes() {
+    const container = document.getElementById('sectorSelectContainer');
+    container.innerHTML = '';
+    
+    const allLabel = document.createElement('label');
+    const allCheckbox = document.createElement('input');
+    allCheckbox.type = 'checkbox'; allCheckbox.value = 'all'; allCheckbox.checked = true;
+    allCheckbox.addEventListener('change', (event) => {
+        container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            cb.checked = event.target.checked;
+        });
+        populateMetricSelector();
+    });
+    const allColorDot = document.createElement('span');
+    allColorDot.className = 'color-dot dot-all';
+    allLabel.appendChild(allColorDot);
+    allLabel.appendChild(allCheckbox);
+    allLabel.appendChild(document.createTextNode('Todos os Setores'));
+    container.appendChild(allLabel);
+    
+    for (const key in setoresConfig) {
+        const setor = setoresConfig[key];
+        const label = document.createElement('label');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox'; checkbox.value = key; checkbox.checked = true;
+        const colorDot = document.createElement('span');
+        colorDot.className = `color-dot dot-${key}`;
+        
+        label.appendChild(colorDot);
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(setor.nome));
+        checkbox.addEventListener('change', () => {
+            if (!checkbox.checked) {
+                container.querySelector('input[value="all"]').checked = false;
+            }
+            populateMetricSelector();
+        });
+        container.appendChild(label);
+    }
+}
+
+function populateMetricSelector() {
+    const container = document.getElementById('metricSelectContainer');
+    container.innerHTML = '';
+    const userRole = localStorage.getItem('dtpoUserRole');
+    const selectedSectors = Array.from(document.querySelectorAll('#sectorSelectContainer input:checked')).map(cb => cb.value).filter(val => val !== 'all');
+    const availableMetrics = new Set();
+    
+    if (selectedSectors.length > 0) {
+        selectedSectors.forEach(idSetor => {
+            if(setoresConfig[idSetor]) {
+                setoresConfig[idSetor].grupos.forEach(idGrupo => {
+                    gruposConfig[idGrupo].campos.forEach(idCampo => availableMetrics.add(idCampo));
+                });
+            }
+        });
+    }
+
+    const sortedMetrics = Array.from(availableMetrics).sort((a, b) => camposConfig[a].nome.localeCompare(camposConfig[b].nome));
+
+    sortedMetrics.forEach(key => {
+        const campo = camposConfig[key];
+        if (userRole !== 'admin' && campo.tipo === 'moeda') return;
+        
+        const label = document.createElement('label');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = key;
+        
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(campo.nome));
+        container.appendChild(label);
+    });
+
+    if (container.querySelector('input')) {
+        container.querySelector('input').checked = true;
+    }
+}
+
+function setDateRangeDefaults() {
+    const allData = JSON.parse(localStorage.getItem('dtpoDados')) || [];
+    if (allData.length === 0) return;
+
+    const sortedDates = allData.map(d => d.data).sort();
+    const minDate = sortedDates[0];
+    const maxDate = sortedDates[sortedDates.length - 1];
+
+    document.getElementById('dateStart').value = minDate;
+    document.getElementById('dateEnd').value = maxDate;
+}
+
+function generateChart() {
+    const spinner = document.getElementById('chartSpinner');
+    spinner.style.display = 'block';
+
+    setTimeout(() => {
+        const allData = JSON.parse(localStorage.getItem('dtpoDados')) || [];
+        if (allData.length === 0) {
+            alert("Não há dados para gerar o gráfico.");
+            spinner.style.display = 'none';
+            return;
+        }
+
+        const selectedMetrics = Array.from(document.querySelectorAll('#metricSelectContainer input:checked')).map(cb => cb.value);
+        if (selectedMetrics.length === 0) {
+            alert("Por favor, selecione pelo menos uma métrica.");
+            spinner.style.display = 'none';
+            return;
+        }
+
+        const selectedPeriod = document.getElementById('periodSelect').value;
+        const chartType = document.getElementById('chartTypeSelect').value;
+        const dateStart = document.getElementById('dateStart').value;
+        const dateEnd = document.getElementById('dateEnd').value;
+        const selectedSectors = Array.from(document.querySelectorAll('#sectorSelectContainer input:checked')).map(cb => cb.value).filter(val => val !== 'all');
+
+        if (selectedSectors.length === 0) {
+            alert("Por favor, selecione pelo menos um setor.");
+            spinner.style.display = 'none';
+            return;
+        }
+
+        let dataToProcess = allData.filter(record => {
+            const recordDate = record.data;
+            const isInSector = selectedSectors.includes(record.setor);
+            const isAfterStart = !dateStart || recordDate >= dateStart;
+            const isBeforeEnd = !dateEnd || recordDate <= dateEnd;
+            return isInSector && isAfterStart && isBeforeEnd;
+        });
+
+        const processedData = {};
+        dataToProcess.forEach(record => {
+            let periodLabel = '';
+            if (selectedPeriod === 'month') periodLabel = record.data;
+            else if (selectedPeriod === 'year') periodLabel = record.data.slice(0, 4);
+            else if (selectedPeriod === 'quarter') {
+                const year = record.data.slice(0, 4);
+                const month = parseInt(record.data.slice(5, 7));
+                const quarter = Math.floor((month - 1) / 3) + 1;
+                periodLabel = `${year}-T${quarter}`;
+            }
+
+            if (!processedData[periodLabel]) processedData[periodLabel] = {};
+            
+            selectedMetrics.forEach(metric => {
+                if (record[metric] !== undefined) {
+                    if (!processedData[periodLabel][record.setor]) processedData[periodLabel][record.setor] = {};
+                    processedData[periodLabel][record.setor][metric] = (processedData[periodLabel][record.setor][metric] || 0) + record[metric];
+                }
+            });
+        });
+
+        const chartLabels = Object.keys(processedData).sort();
+        const chartDatasets = [];
+        
+        selectedSectors.forEach(sector => {
+            const color = colorPalette[sector] || 'rgba(108, 117, 125, 0.8)';
+            
+            selectedMetrics.forEach(metric => {
+                const data = chartLabels.map(label => {
+                    return (processedData[label]?.[sector]?.[metric]) || 0;
+                });
+
+                if (data.some(d => d > 0)) {
+                    chartDatasets.push({
+                        label: `${setoresConfig[sector].nome} - ${camposConfig[metric].nome}`,
+                        data: data,
+                        borderColor: color,
+                        backgroundColor: color,
+                        fill: chartType === 'line' ? false : true,
+                        tension: 0.1
+                    });
+                }
+            });
+        });
+
+        const chartTitle = `Análise Comparativa de Métricas`;
+        const ctx = document.getElementById('myChart').getContext('2d');
+        if (myChart) myChart.destroy();
+
+        myChart = new Chart(ctx, {
+            type: chartType,
+            data: { labels: chartLabels, datasets: chartDatasets },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { title: { display: true, text: chartTitle, font: { size: 18 } }, legend: { position: 'top' } },
+                scales: { y: { beginAtZero: true, title: { display: true, text: 'Valores' } }, x: { title: { display: true, text: 'Período' } } }
+            }
+        });
+
+        spinner.style.display = 'none';
+    }, 50);
+}
+
+function exportChart() {
+    if (!myChart) {
+        alert("Gere um gráfico antes de tentar exportar!");
+        return;
+    }
+    const url = myChart.toBase64Image('image/png', 1.0);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'grafico-dtpo.png';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Lógica do menu responsivo
+document.getElementById('menuToggle').addEventListener('click', function() {
+    document.getElementById('mainNav').classList.toggle('nav-open');
+});
+
+window.onload = () => {
+    const user = localStorage.getItem('dtpoUser');
+    const role = localStorage.getItem('dtpoUserRole');
+    if (user) {
+        document.getElementById('userDisplay').innerText = user;
+    }
+    if (role === 'admin') {
+         document.querySelectorAll('.admin-link').forEach(link => {
+            link.style.display = 'inline-flex';
+        });
+    }
+
+    populateSectorCheckboxes();
+    populateMetricSelector();
+    setDateRangeDefaults();
+    document.getElementById('generateChartBtn').addEventListener('click', generateChart);
+    document.getElementById('exportChartBtn').addEventListener('click', exportChart);
+    feather.replace();
+};
+</script>
+
+</body>
+</html>
