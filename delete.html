@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Excluir Dados - DTPO Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --secondary-color: #6c757d;
+            --background-color: #f4f6f9;
+            --card-background: #ffffff;
+            --text-color: #343a40;
+            --text-muted: #6c757d;
+            --border-color: #e2e8f0;
+            --border-radius: 8px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        /* --- Navegação Principal Responsiva --- */
+        .main-header {
+            background-color: var(--card-background);
+            box-shadow: var(--shadow);
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 64px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .header-left { display: flex; align-items: center; gap: 20px; }
+        .logo { font-size: 1.2rem; font-weight: 600; flex-shrink: 0; }
+        
+        .main-nav { display: flex; gap: 5px; }
+        .main-nav a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-weight: 500;
+            padding: 22px 10px;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease-in-out;
+        }
+        .main-nav a:hover, .main-nav a.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        
+        .user-controls { display: flex; align-items: center; gap: 15px; }
+        .user-info { font-size: 0.9rem; color: var(--text-muted); }
+        .admin-link { display: none; }
+        .menu-toggle { display: none; background: none; border: none; cursor: pointer; padding: 5px; }
+
+        .main-content {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        .content-card {
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 25px;
+        }
+        .content-card h3 {
+            margin-top: 0; margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color); padding-bottom: 15px;
+            color: #dc3545;
+        }
+        p.warning {
+            background-color: #fff3cd; border-left: 4px solid #ffc107;
+            padding: 15px; border-radius: 4px; color: #664d03;
+        }
+        
+        .entry-list { list-style: none; padding: 0; margin-top: 20px; }
+        .entry-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 15px; border: 1px solid var(--border-color); border-radius: var(--border-radius); 
+            margin-bottom: 10px; transition: all 0.2s ease-in-out; 
+            flex-wrap: wrap; gap: 10px;
+        }
+        .entry-item:hover { border-color: #ffc107; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .entry-item span { font-weight: 500; }
+        
+        button {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            cursor: pointer; border: 1px solid transparent; padding: 8px 15px;
+            border-radius: var(--border-radius); font-weight: 500; text-decoration: none;
+            transition: all 0.2s ease-in-out;
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .delete-btn { background-color: #dc3545; color: white; }
+        .delete-btn:hover { background-color: #c82333; }
+        
+        #toast { visibility: hidden; min-width: 250px; margin-left: -125px; background-color: #333; color: #fff; text-align: center; border-radius: var(--border-radius); padding: 16px; position: fixed; z-index: 1001; left: 50%; top: 30px; font-size: 17px; opacity: 0; box-shadow: 0 5px 15px rgba(0,0,0,0.2); transition: all 0.5s ease-in-out; }
+        #toast.show { visibility: visible; opacity: 1; top: 80px; }
+        #toast.success { background-color: #198754; }
+
+        /* =================================== */
+        /* === MEDIA QUERIES PARA RESPONSIVIDADE === */
+        /* =================================== */
+      @media (max-width: 1024px) {
+            .main-nav {
+                display: none; flex-direction: column; position: absolute; top: 64px; left: 0; width: 100%;
+                background-color: var(--card-background); box-shadow: var(--shadow); border-top: 1px solid var(--border-color);
+            }
+            .main-nav.nav-open { display: flex; }
+            .main-nav a { padding: 15px 20px; border-bottom: 1px solid var(--border-color); }
+            .main-nav a:hover, .main-nav a.active {
+                border-bottom: 1px solid var(--border-color); background-color: var(--background-color);
+            }
+            .menu-toggle { display: block; }
+        }
+
+        @media (max-width: 767px) {
+            .main-content, .main-header { padding: 0 15px; }
+            .content-card { padding: 15px; }
+            .entry-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .delete-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header class="main-header">
+    <div class="header-left">
+        <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu">
+            <i data-feather="menu"></i>
+        </button>
+        <div class="logo">DTPO Dashboard</div>
+        <nav class="main-nav" id="mainNav">
+            <a href="index.html"><i data-feather="home"></i>Dashboard</a>
+            <a href="graficos.html"><i data-feather="pie-chart"></i>Gráficos</a>
+            <a href="relatorio.html"><i data-feather="file-text"></i>Relatórios</a>
+            <a href="add.html" class="admin-link"><i data-feather="plus-circle"></i>Adicionar Dados</a>
+            <a href="delete.html" class="admin-link active"><i data-feather="trash-2"></i>Excluir Dados</a>
+        </nav>
+    </div>
+    <div class="user-controls">
+        <div class="user-info">
+            Bem-vindo, <span id="userDisplay">Visitante</span>!
+        </div>
+    </div>
+</header>
+
+<div class="main-content">
+    <div class="content-card">
+        <h3 id="pageTitle">Excluir Lançamentos Mensais</h3>
+        <p class="warning">
+            <strong>Atenção:</strong> Clicar em "Excluir" removerá permanentemente o registro do mês/setor correspondente. Esta ação não pode ser desfeita.
+        </p>
+        <ul id="entryList" class="entry-list"></ul>
+        <p id="noData" style="display: none;">Nenhum dado para excluir.</p>
+    </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const setoresConfig = {
+    'coc': { nome: 'COC' },
+    'dtpo3g': { nome: 'DTPO-3G' },
+    'dtpo2': { nome: 'DTPO-2' }
+};
+
+function showToast(message, type = 'success') {
+    const toast = document.getElementById("toast");
+    toast.textContent = message;
+    toast.className = `show ${type}`;
+    setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+}
+
+function carregarEntradas() {
+    const list = document.getElementById('entryList');
+    const noDataEl = document.getElementById('noData');
+    list.innerHTML = '';
+   
+    const dados = localStorage.getItem('dtpoDados') ? JSON.parse(localStorage.getItem('dtpoDados')) : [];
+
+    if (dados.length === 0) {
+        noDataEl.style.display = 'block';
+    } else {
+        noDataEl.style.display = 'none';
+    }
+
+    dados.sort((a, b) => b.data.localeCompare(a.data) || a.setor.localeCompare(b.setor));
+
+    dados.forEach(entry => {
+        const li = document.createElement('li');
+        li.className = 'entry-item';
+       
+        const info = document.createElement('span');
+        info.textContent = `Período: ${entry.data} - Setor: ${setoresConfig[entry.setor]?.nome || entry.setor}`;
+       
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.innerHTML = '<i data-feather="trash"></i> Excluir';
+        deleteBtn.onclick = () => excluirEntrada(entry.data, entry.setor);
+
+        li.appendChild(info);
+        li.appendChild(deleteBtn);
+        list.appendChild(li);
+    });
+    feather.replace();
+}
+
+function excluirEntrada(data, setor) {
+    const confirmacao = confirm(`Tem certeza que deseja excluir TODOS os dados do período ${data} para o setor ${setoresConfig[setor]?.nome || setor}?\n\nEsta ação é irreversível!`);
+
+    if (!confirmacao) return;
+
+    let dadosNumericos = localStorage.getItem('dtpoDados') ? JSON.parse(localStorage.getItem('dtpoDados')) : [];
+    const dadosNumericosAtualizados = dadosNumericos.filter(d => !(d.data === data && d.setor === setor));
+    localStorage.setItem('dtpoDados', JSON.stringify(dadosNumericosAtualizados));
+
+    let dadosTextuais = localStorage.getItem('dtpoRegistrosTextuais') ? JSON.parse(localStorage.getItem('dtpoRegistrosTextuais')) : [];
+    const dadosTextuaisAtualizados = dadosTextuais.filter(d => !(d.data === data && d.setor === setor));
+    localStorage.setItem('dtpoRegistrosTextuais', JSON.stringify(dadosTextuaisAtualizados));
+
+    showToast('Registro excluído com sucesso!');
+   
+    // NOVO: Em vez de recarregar a página, apenas atualiza a lista
+    carregarEntradas();
+}
+
+// Lógica do menu responsivo
+document.getElementById('menuToggle').addEventListener('click', function() {
+    document.getElementById('mainNav').classList.toggle('nav-open');
+});
+
+// Lógica de inicialização da página
+window.onload = () => {
+    const user = localStorage.getItem('dtpoUser');
+    const role = localStorage.getItem('dtpoUserRole');
+
+    // NOVO: Lógica de verificação de permissão modificada
+    if (role !== 'admin') {
+        // Oculta o conteúdo principal e mostra uma mensagem de erro
+        const mainContent = document.querySelector('.main-content');
+        if(mainContent) {
+            mainContent.innerHTML = `
+                <div class="content-card">
+                    <h3>Acesso Negado</h3>
+                    <p>Você não tem permissão para acessar esta página. Por favor, faça login como administrador.</p>
+                </div>
+            `;
+        }
+        // Remove os links de admin da barra de navegação para consistência
+        document.querySelectorAll('.admin-link').forEach(link => link.remove());
+        return; // Interrompe a execução do resto do script
+    }
+
+    if (user) {
+        document.getElementById('userDisplay').innerText = user;
+    }
+    // Mostra os links de admin se o usuário tiver permissão
+    document.querySelectorAll('.admin-link').forEach(link => {
+        link.style.display = 'inline-flex';
+    });
+   
+    carregarEntradas();
+    feather.replace();
+};
+</script>
+
+</body>
+</html>
